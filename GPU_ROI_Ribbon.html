@@ -1060,7 +1060,7 @@ const GPURoiEngine = (() => {
         */
     const Engine = {
         // State
-        electricityCost: 0.10,
+        electricityCost: 0.12,
         poolFeePercent: 1.5,
         serpApiKey: null,
         isLive: false,
@@ -1074,7 +1074,7 @@ const GPURoiEngine = (() => {
          * Initialize engine. Call once on page load.
          */
         init(options) {
-            this.electricityCost = options?.electricityCost || 0.10;
+            this.electricityCost = options?.electricityCost || 0.12;
             this.poolFeePercent = options?.poolFeePercent || 1.5;
             this.serpApiKey = options?.serpApiKey || null;
             this._onUpdate = options?.onUpdate || null;
@@ -1082,7 +1082,7 @@ const GPURoiEngine = (() => {
             // Load persisted settings
             try {
                 const ec = localStorage.getItem('gpuroi_electricityCost');
-                if (ec) this.electricityCost = parseFloat(ec) || 0.10;
+                if (ec) this.electricityCost = parseFloat(ec) || 0.12;
                 const pf = localStorage.getItem('gpuroi_poolFee');
                 if (pf) this.poolFeePercent = parseFloat(pf) || 1.5;
                 const sk = localStorage.getItem('gpuroi_serpApiKey');
