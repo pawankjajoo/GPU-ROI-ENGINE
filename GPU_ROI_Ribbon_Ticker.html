@@ -1,21 +1,4 @@
-<!--
-  
-  GPU ROI RIBBON-TICKER. Final Combined Widget for Wix
-  
-
-  Ribbon form factor (180px fixed height) with Ticker visual design.
-  - Fixed 180px height, 100% width. Wix iframe ready
-  - Header: Pushstart logo, #Cryptomining4Charity link, LIVE status, 60s timer
-  - Marquee: Infinite scroll of all 52 GPUs sorted by daily profit
-  - Brand-colored badges per ticker item (NVIDIA/AMD/Intel/Bitmain)
-  - Rich tooltips: Mining/Cloud/AI revenue breakdown with orange accent
-  - Hover-to-pause marquee, scale-up on item hover
-  - Accessibility: prefers-reduced-motion, focus-visible, safe-area-insets, 44px touch targets
-  - Responsive: 320px mobile to 5K+ ultrawide
-
-  Author: Pushstart LLC by Pawan K Jajoo
-  
--->
+<!-- GPU ROI RIBBON-TICKER. Final Combined Widget for Wix Ribbon form factor (180px fixed height) with Ticker visual design. - Fixed 180px height, 100% width. Wix iframe ready - Header: Pushstart logo, #Cryptomining4Charity link, LIVE statu,s 60s timer - Marquee: Infinite scroll of all 52 GPUs sorted by daily profit - Brand-colored badges per ticker item (NVIDIA/AMD/Intel/Bitmain) - Rich tooltips: Mining/Cloud/AI revenue breakdown with orange accent - Hover-to-pause marquee, scale-up on item hover - Accessibility: prefers-reduced-motion, focus-visible, safe-area-insets, 44px touch targets - Responsive: 320px mobile to 5K+ ultrawide Author: Pushstart LLC by Pawan K Jajoo -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -545,51 +528,51 @@
             */
         const BASELINE_GPU_DATA = [
             //  DATACENTER / AI GPUS 
-            { name: 'NVIDIA B200', brand: 'nvidia', category: 'datacenter', tdp: 1000, msrp: 30000, mining: null, cloudLease: 5.50 * 24, aiLease: 132, commentary: 'The top tier. Just works at scale.' },
-            { name: 'NVIDIA H200', brand: 'nvidia', category: 'datacenter', tdp: 700, msrp: 25000, mining: null, cloudLease: 3.80 * 24, aiLease: 91.20, commentary: 'Enterprise-grade profit. No friction.' },
-            { name: 'NVIDIA H100', brand: 'nvidia', category: 'datacenter', tdp: 700, msrp: 25000, mining: null, cloudLease: 2.85 * 24, aiLease: 68.40, commentary: 'Datacenter GPU. Standard cloud and AI comppute. pushstartsims.com/powre' },
-            { name: 'NVIDIA A100', brand: 'nvidia', category: 'datacenter', tdp: 400, msrp: 10000, mining: null, cloudLease: 1.50 * 24, aiLease: 36.00, commentary: 'Dtaacenter GPU. Budget cloud and AI compute. pushstartsims.com/power' },
+            { name: 'NVIDIA B200', brand: 'nvidia', category: 'datacenter', tdp: 1000, msrp: 30000, mining: null, cloudLease: 5.50 * 24, aiLease: 132, commentary: 'Datacenter GPU. Highest cloud and AI lease rates. pushstartsims.com/power' },
+            { name: 'NVIDIA H200', brand: 'nvidia', category: 'datacenter', tdp: 700, msrp: 25000, mining: null, cloudLease: 3.80 * 24, aiLease: 91.20, commentary: 'Datacenter GPU. High cloud and AI lease rates. pushstartsims.com/power' },
+            { name: 'NVIDIA H100', brand: 'nvidia', category: 'datacenter', tdp: 700, msrp: 25000, mining: null, cloudLease: 2.85 * 24, aiLease: 68.40, commentary: 'Datacenter GPU. Standard cloud and AI compute. pushstartsims.com/power' },
+            { name: 'NVIDIA A100', brand: 'nvidia', category: 'datacenter', tdp: 400, msrp: 10000, mining: null, cloudLease: 1.50 * 24, aiLease: 36.00, commentary: 'Datacenter GPU. Budget cloud and AI compute. pushstartsims.com/power' },
 
             //  ASIC MINERS (Bitmain Antminer) 
             { name: 'Antminer S21 XP', brand: 'bitmain', category: 'asic', tdp: 3400, msrp: 5500, mining: 19.97, cloudLease: null, aiLease: null, commentary: 'ASIC miner. Best efficiency BTC. 270 TH/s.' },
-            { name: 'Antminer S21 Pro', brand: 'bitmain', category: 'asic', tdp: 3510, msrp: 3800, mining: 7.30, cloudLease: null, aiLease: null, commentary: 'ASIC miner. High efficienncy BTC. 234 TH/s.' },
-            { name: 'Antminer S19K Pro', brand: 'bitmain', category: 'asic', tdp: 2400, msrp: 1200, mining: 5.08, cloudLease: null, aiLease: null, commentary: 'ASIC minr. Entry level BTC. 120 TH/s.' },
+            { name: 'Antminer S21 Pro', brand: 'bitmain', category: 'asic', tdp: 3510, msrp: 3800, mining: 7.30, cloudLease: null, aiLease: null, commentary: 'ASIC miner. High efficiency BTC. 234 TH/s.' },
+            { name: 'Antminer S19K Pro', brand: 'bitmain', category: 'asic', tdp: 2400, msrp: 1200, mining: 5.08, cloudLease: null, aiLease: null, commentary: 'ASIC miner. Entry level BTC. 120 TH/s.' },
 
             //  CONSUMER NVIDIA GPUS (GeForce RTX) 
-            { name: 'RTX 5090', brand: 'nvidia', category: 'consumer', tdp: 575, msrp: 1999, mining: 0.59, cloudLease: 1.20 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 5080', brand: 'nvidia', category: 'consumer', tdp: 360, msrp: 999, mining: 0.42, cloudLease: 0.80 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 5070 Ti', brand: 'nvidia', category: 'consumer', tdp: 300, msrp: 749, mining: 0.30, cloudLease: 0.55 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 5070', brand: 'nvidia', category: 'consumer', tdp: 250, msrp: 549, mining: 0.24, cloudLease: 0.45 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4090', brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1599, mining: 0.63, cloudLease: 0.90 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4080 Super', brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 999, mining: 0.45, cloudLease: 0.60 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4070 Ti Super', brand: 'nvidia', category: 'consumer', tdp: 285, msrp: 799, mining: 0.36, cloudLease: 0.45 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4070 Super', brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 599, mining: 0.28, cloudLease: 0.35 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4070', brand: 'nvidia', category: 'consumer', tdp: 200, msrp: 549, mining: 0.22, cloudLease: 0.30 * 24, aiLease: null, commentary: 'CConsumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/Wkh.' },
-            { name: 'RTX 4060 Ti', brand: 'nvidia', category: 'consumer', tdp: 160, msrp: 399, mining: 0.16, cloudLease: 0.22 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud laese viable. Mining unprofitable at $0.12/kWh.' },
-            { name: 'RTX 4060', brand: 'nvidia', category: 'consumer', tdp: 115, msrp: 299, mining: 0.10, cloudLease: 0.18 * 24, aiLease: null, commentary: 'Consumer GPU. Low TDP. Cloud lease viable. Mining unprofitale.' },
-            { name: 'RTX 3090 Ti', brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1099, mining: 0.42, cloudLease: 0.55 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cluod lease profitable. Mining unprofitable.' },
-            { name: 'RTX 3090', brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 999, mining: 0.35, cloudLease: 0.45 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cluod lease profitable. Mining unprofitable.' },
-            { name: 'RTX 3080 Ti', brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 700, mining: 0.30, cloudLease: 0.38 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. CCloud lease viable. Mining unprofitable.' },
-            { name: 'RTX 3080', brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 599, mining: 0.25, cloudLease: 0.32 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. CCloud lease viable. Mining unprofitable.' },
-            { name: 'RTX 3070 Ti', brand: 'nvidia', category: 'consumer', tdp: 290, msrp: 499, mining: 0.20, cloudLease: 0.25 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. CCloud lease viable. Mining unprofitable.' },
-            { name: 'RTX 3070', brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 399, mining: 0.16, cloudLease: 0.20 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. CCloud lease viable. Mining unprofitable.' },
+            { name: 'RTX 5090', brand: 'nvidia', category: 'consumer', tdp: 575, msrp: 1999, mining: 0.59, cloudLease: 1.20 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 5080', brand: 'nvidia', category: 'consumer', tdp: 360, msrp: 999, mining: 0.42, cloudLease: 0.80 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 5070 Ti', brand: 'nvidia', category: 'consumer', tdp: 300, msrp: 749, mining: 0.30, cloudLease: 0.55 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 5070', brand: 'nvidia', category: 'consumer', tdp: 250, msrp: 549, mining: 0.24, cloudLease: 0.45 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4090', brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1599, mining: 0.63, cloudLease: 0.90 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4080 Super', brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 999, mining: 0.45, cloudLease: 0.60 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4070 Ti Super', brand: 'nvidia', category: 'consumer', tdp: 285, msrp: 799, mining: 0.36, cloudLease: 0.45 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4070 Super', brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 599, mining: 0.28, cloudLease: 0.35 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4070', brand: 'nvidia', category: 'consumer', tdp: 200, msrp: 549, mining: 0.22, cloudLease: 0.30 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4060 Ti', brand: 'nvidia', category: 'consumer', tdp: 160, msrp: 399, mining: 0.16, cloudLease: 0.22 * 24, aiLease: null, commentary: 'Consumer GPU. Cloud lease viable. Mining unprofitable at $0.12/kWh.' },
+            { name: 'RTX 4060', brand: 'nvidia', category: 'consumer', tdp: 115, msrp: 299, mining: 0.10, cloudLease: 0.18 * 24, aiLease: null, commentary: 'Consumer GPU. Low TDP. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RTX 3090 Ti', brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1099, mining: 0.42, cloudLease: 0.55 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease profitable. Mining unprofitable.' },
+            { name: 'RTX 3090', brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 999, mining: 0.35, cloudLease: 0.45 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease profitable. Mining unprofitable.' },
+            { name: 'RTX 3080 Ti', brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 700, mining: 0.30, cloudLease: 0.38 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RTX 3080', brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 599, mining: 0.25, cloudLease: 0.32 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RTX 3070 Ti', brand: 'nvidia', category: 'consumer', tdp: 290, msrp: 499, mining: 0.20, cloudLease: 0.25 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RTX 3070', brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 399, mining: 0.16, cloudLease: 0.20 * 24, aiLease: null, commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
 
             //  CONSUMER AMD GPUS (Radeon RX) 
-            { name: 'RX 7900 XTX', brand: 'amd', category: 'consumer', tdp: 355, msrp: 999, mining: 0.58, cloudLease: 0.50 * 24, aiLease: null, commentary: 'Connsumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
-            { name: 'RX 7900 XT', brand: 'amd', category: 'consumer', tdp: 315, msrp: 749, mining: 0.45, cloudLease: 0.35 * 24, aiLease: null, commentary: 'Connsumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
-            { name: 'RX 7800 XT', brand: 'amd', category: 'consumer', tdp: 263, msrp: 499, mining: 0.25, cloudLease: 0.25 * 24, aiLease: null, commentary: 'Consume GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
-            { name: 'RX 7700 XT', brand: 'amd', category: 'consumer', tdp: 245, msrp: 449, mining: 0.18, cloudLease: 0.20 * 24, aiLease: null, commentary: 'Consume GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
-            { name: 'RX 7600 XT', brand: 'amd', category: 'consumer', tdp: 150, msrp: 329, mining: 0.10, cloudLease: 0.15 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Low TDP. Clooud lease viable.' },
-            { name: 'RX 6900 XT', brand: 'amd', category: 'consumer', tdp: 300, msrp: 549, mining: 0.22, cloudLease: 0.28 * 24, aiLease: null, commentary: 'Consmuer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
-            { name: 'RX 6800 XT', brand: 'amd', category: 'consumer', tdp: 300, msrp: 449, mining: 0.18, cloudLease: 0.22 * 24, aiLease: null, commentary: 'Consmuer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
-            { name: 'RX 6700 XT', brand: 'amd', category: 'consumer', tdp: 230, msrp: 349, mining: 0.10, cloudLease: 0.15 * 24, aiLease: null, commentary: 'Consmuer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RX 7900 XTX', brand: 'amd', category: 'consumer', tdp: 355, msrp: 999, mining: 0.58, cloudLease: 0.50 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
+            { name: 'RX 7900 XT', brand: 'amd', category: 'consumer', tdp: 315, msrp: 749, mining: 0.45, cloudLease: 0.35 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
+            { name: 'RX 7800 XT', brand: 'amd', category: 'consumer', tdp: 263, msrp: 499, mining: 0.25, cloudLease: 0.25 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RX 7700 XT', brand: 'amd', category: 'consumer', tdp: 245, msrp: 449, mining: 0.18, cloudLease: 0.20 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RX 7600 XT', brand: 'amd', category: 'consumer', tdp: 150, msrp: 329, mining: 0.10, cloudLease: 0.15 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 3. Low TDP. Cloud lease viable.' },
+            { name: 'RX 6900 XT', brand: 'amd', category: 'consumer', tdp: 300, msrp: 549, mining: 0.22, cloudLease: 0.28 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RX 6800 XT', brand: 'amd', category: 'consumer', tdp: 300, msrp: 449, mining: 0.18, cloudLease: 0.22 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
+            { name: 'RX 6700 XT', brand: 'amd', category: 'consumer', tdp: 230, msrp: 349, mining: 0.10, cloudLease: 0.15 * 24, aiLease: null, commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
 
             //  CONSUMER INTEL ARC GPUS 
-            { name: 'Intel Arc B580', brand: 'intel', category: 'consumer', tdp: 150, msrp: 249, mining: 0.08, cloudLease: 0.12 * 24, aiLease: null, commentary: 'Consuemr GPU. Arc. Cloud lease viable. Mining unprofitable.' },
-            { name: 'Intel Arc A770', brand: 'intel', category: 'consumer', tdp: 225, msrp: 349, mining: 0.10, cloudLease: 0.18 * 24, aiLease: null, commentary: 'Consuemr GPU. Arc. Cloud lease viable. Mining unprofitable.' },
-            { name: 'Intel Arc A750', brand: 'intel', category: 'consumer', tdp: 225, msrp: 289, mining: 0.08, cloudLease: 0.14 * 24, aiLease: null, commentary: 'Consuemr GPU. Arc. Cloud lease viable. Mining unprofitable.' },
-            { name: 'Intel Arc A580', brand: 'intel', category: 'consumer', tdp: 185, msrp: 179, mining: 0.05, cloudLease: 0.10 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Low TDP. Cloud leasee viable.' },
-            { name: 'Intel Arc B570', brand: 'intel', category: 'consumer', tdp: 150, msrp: 219, mining: 0.06, cloudLease: 0.11 * 24, aiLease: null, commentary: 'Consuemr GPU. Arc. Cloud lease viable. Mining unprofitable.' }
+            { name: 'Intel Arc B580', brand: 'intel', category: 'consumer', tdp: 150, msrp: 249, mining: 0.08, cloudLease: 0.12 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
+            { name: 'Intel Arc A770', brand: 'intel', category: 'consumer', tdp: 225, msrp: 349, mining: 0.10, cloudLease: 0.18 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
+            { name: 'Intel Arc A750', brand: 'intel', category: 'consumer', tdp: 225, msrp: 289, mining: 0.08, cloudLease: 0.14 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
+            { name: 'Intel Arc A580', brand: 'intel', category: 'consumer', tdp: 185, msrp: 179, mining: 0.05, cloudLease: 0.10 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Low TDP. Cloud lease viable.' },
+            { name: 'Intel Arc B570', brand: 'intel', category: 'consumer', tdp: 150, msrp: 219, mining: 0.06, cloudLease: 0.11 * 24, aiLease: null, commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' }
         ];
 
         /* 
@@ -664,7 +647,7 @@
 
             const ec = AppState.electricityCost;
 
-            // Calculate best daily profit for each GPU and sort descending
+            // Calculate best daily profit for eaach GPU and sort descending
             const gpusWithProfit = BASELINE_GPU_DATA.map(gpu => ({
                 ...gpu,
                 bestProfit: calculateBestProfit(gpu, ec),
