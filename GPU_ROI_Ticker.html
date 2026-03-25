@@ -841,6 +841,8 @@
                 <label class="control-label">Sort:</label>
                 <select class="sort-dropdown" id="sort-dropdown">
                     <option value="profit-desc">Profit ↓</option>
+                    <option value="best-gpu">Best GPU</option>
+                    <option value="best-activity">Best Activity</option>
                     <option value="roi-asc">ROI ↑</option>
                     <option value="efficiency-desc">Efficiency ↓</option>
                     <option value="power-asc">Power ↑</option>
@@ -1681,6 +1683,12 @@ const GPURoiEngine = (() => {
             const sortFn = {
                 'profit-desc':     (a, b) => b.bestDailyProfit - a.bestDailyProfit,
                 'profit-asc':      (a, b) => a.bestDailyProfit - b.bestDailyProfit,
+                'best-gpu':        (a, b) => b.bestDailyProfit - a.bestDailyProfit,
+                'best-activity':   (a, b) => {
+                    const aMax = Math.max(a.cloudNet||0, a.aiNet||0, a.miningNet||0);
+                    const bMax = Math.max(b.cloudNet||0, b.aiNet||0, b.miningNet||0);
+                    return bMax - aMax;
+                },
                 'roi-asc':         (a, b) => a.roiDays - b.roiDays,
                 'roi-desc':        (a, b) => b.roiDays - a.roiDays,
                 'efficiency-desc': (a, b) => b.efficiency - a.efficiency,
@@ -1764,7 +1772,34 @@ const GPURoiEngine = (() => {
         }
     };
 
-    /* 
+    /* ── Sort helpers ─────────────────────────────── */
+    const Sort = {
+        byMostProfitableUnit(results) {
+            if (!results || !results.length) return [];
+            return results.map(r => {
+                const acts = [];
+                if (r.cloudNet != null && !isNaN(r.cloudNet)) acts.push({ type:'Cloud Lease', icon:'☁', netProfit:r.cloudNet });
+                if (r.aiNet   != null && !isNaN(r.aiNet))   acts.push({ type:'AI Inference', icon:'🤖', netProfit:r.aiNet });
+                if (r.miningNet != null && !isNaN(r.miningNet)) acts.push({ type:'Mining', icon:'⛏', netProfit:r.miningNet });
+                if (!acts.length) return null;
+                const best = acts.reduce((a,b) => a.netProfit > b.netProfit ? a : b);
+                return { gpu: r.gpu || r.name, bestActivity: best.type, netProfit: best.netProfit, icon: best.icon, category: r.category || 'consumer' };
+            }).filter(Boolean).sort((a,b) => b.netProfit - a.netProfit);
+        },
+        byMostProfitableActivity(results) {
+            if (!results || !results.length) return [];
+            const all = [];
+            results.forEach(r => {
+                const name = r.gpu || r.name;
+                if (r.cloudNet != null && !isNaN(r.cloudNet)) all.push({ gpu:name, activity:'Cloud Lease', icon:'☁', netProfit:r.cloudNet });
+                if (r.aiNet   != null && !isNaN(r.aiNet))   all.push({ gpu:name, activity:'AI Inference', icon:'🤖', netProfit:r.aiNet });
+                if (r.miningNet != null && !isNaN(r.miningNet)) all.push({ gpu:name, activity:'Mining', icon:'⛏', netProfit:r.miningNet });
+            });
+            return all.sort((a,b) => b.netProfit - a.netProfit);
+        }
+    };
+
+    /*
        PUBLIC API
         */
     return {
@@ -1773,6 +1808,7 @@ const GPURoiEngine = (() => {
         API,
         Cache,
         Format,
+        Sort,
         GPU_DATABASE,
         COIN_DEFINITIONS,
         DEFAULT_FEES,

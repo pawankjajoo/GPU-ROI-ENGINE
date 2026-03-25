@@ -438,6 +438,10 @@
             <a href="https://www.pushstartsims.com/post/cryptomining4charity" target="_blank" rel="noopener noreferrer" class="charity-link">Learn more about our <span class="hashtag">#Cryptomining4Charity</span> initiative. All GPUs used in customer builds are brand-new.</a>
         </div>
         <div class="header-right">
+            <select id="sortToggle" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:2px 6px;font-size:10px;font-family:inherit;cursor:pointer;outline:none;">
+                <option value="best-gpu">Best GPU</option>
+                <option value="best-activity">Best Activity</option>
+            </select>
             <div class="status-indicator">
                 <div class="status-dot live" id="status-dot"></div>
                 <span id="status-text">LIVE</span>
@@ -1242,6 +1246,12 @@ const GPURoiEngine = (() => {
             const sortFn = {
                 'profit-desc':     (a, b) => b.bestDailyProfit - a.bestDailyProfit,
                 'profit-asc':      (a, b) => a.bestDailyProfit - b.bestDailyProfit,
+                'best-gpu':        (a, b) => b.bestDailyProfit - a.bestDailyProfit,
+                'best-activity':   (a, b) => {
+                    const aMax = Math.max(a.cloudNet||0, a.aiNet||0, a.miningNet||0);
+                    const bMax = Math.max(b.cloudNet||0, b.aiNet||0, b.miningNet||0);
+                    return bMax - aMax;
+                },
                 'roi-asc':         (a, b) => a.roiDays - b.roiDays,
                 'roi-desc':        (a, b) => b.roiDays - a.roiDays,
                 'efficiency-desc': (a, b) => b.efficiency - a.efficiency,
@@ -1325,7 +1335,34 @@ const GPURoiEngine = (() => {
         }
     };
 
-    /* 
+    /* ── Sort helpers ─────────────────────────────── */
+    const Sort = {
+        byMostProfitableUnit(results) {
+            if (!results || !results.length) return [];
+            return results.map(r => {
+                const acts = [];
+                if (r.cloudNet != null && !isNaN(r.cloudNet)) acts.push({ type:'Cloud Lease', icon:'☁', netProfit:r.cloudNet });
+                if (r.aiNet   != null && !isNaN(r.aiNet))   acts.push({ type:'AI Inference', icon:'🤖', netProfit:r.aiNet });
+                if (r.miningNet != null && !isNaN(r.miningNet)) acts.push({ type:'Mining', icon:'⛏', netProfit:r.miningNet });
+                if (!acts.length) return null;
+                const best = acts.reduce((a,b) => a.netProfit > b.netProfit ? a : b);
+                return { gpu: r.gpu || r.name, bestActivity: best.type, netProfit: best.netProfit, icon: best.icon, category: r.category || 'consumer' };
+            }).filter(Boolean).sort((a,b) => b.netProfit - a.netProfit);
+        },
+        byMostProfitableActivity(results) {
+            if (!results || !results.length) return [];
+            const all = [];
+            results.forEach(r => {
+                const name = r.gpu || r.name;
+                if (r.cloudNet != null && !isNaN(r.cloudNet)) all.push({ gpu:name, activity:'Cloud Lease', icon:'☁', netProfit:r.cloudNet });
+                if (r.aiNet   != null && !isNaN(r.aiNet))   all.push({ gpu:name, activity:'AI Inference', icon:'🤖', netProfit:r.aiNet });
+                if (r.miningNet != null && !isNaN(r.miningNet)) all.push({ gpu:name, activity:'Mining', icon:'⛏', netProfit:r.miningNet });
+            });
+            return all.sort((a,b) => b.netProfit - a.netProfit);
+        }
+    };
+
+    /*
        PUBLIC API
         */
     return {
@@ -1334,6 +1371,7 @@ const GPURoiEngine = (() => {
         API,
         Cache,
         Format,
+        Sort,
         GPU_DATABASE,
         COIN_DEFINITIONS,
         DEFAULT_FEES,
@@ -1432,21 +1470,33 @@ class GPURoiRibbon {
     }
 
     renderMarquee(gpuResults) {
-        // Sort by daily profit descending
-        const sorted = [...gpuResults].sort((a, b) => (b.dailyProfit || 0) - (a.dailyProfit || 0));
-        
-        // Create item HTML
-        const itemsHtml = sorted.map(gpu => this.createTickerItem(gpu)).join('');
-        
-        // Duplicate for continuous loop
+        const sortMode = document.getElementById('sortToggle')?.value || 'best-gpu';
+        this._lastGpuData = gpuResults; // cache for re-render on sort change
+
+        let displayItems;
+        if (sortMode === 'best-activity') {
+            // Flatten: one entry per GPU×Activity combo
+            const flat = [];
+            gpuResults.forEach(gpu => {
+                const miningProfit = gpu.dailyProfit; // approximate: use engine's best if mining is best
+                if (gpu.cloudLeaseDaily > 0) flat.push({ ...gpu, name: gpu.name + ' ☁', dailyProfit: gpu.cloudLeaseDaily, bestSource: 'Cloud' });
+                if (gpu.aiLeaseDaily > 0) flat.push({ ...gpu, name: gpu.name + ' 🤖', dailyProfit: gpu.aiLeaseDaily, bestSource: 'AI Lease' });
+                // Mining entry: dailyProfit minus cloud/ai (approximate net mining)
+                const miningNet = gpu.dailyProfit - Math.max(gpu.cloudLeaseDaily||0, gpu.aiLeaseDaily||0);
+                if (miningNet !== 0 || (gpu.dailyProfit > 0 && gpu.cloudLeaseDaily === 0 && gpu.aiLeaseDaily === 0)) {
+                    flat.push({ ...gpu, name: gpu.name + ' ⛏', dailyProfit: gpu.networkFee != null ? gpu.dailyProfit : 0, bestSource: 'Mining' });
+                }
+            });
+            displayItems = flat.sort((a, b) => (b.dailyProfit || 0) - (a.dailyProfit || 0));
+        } else {
+            displayItems = [...gpuResults].sort((a, b) => (b.dailyProfit || 0) - (a.dailyProfit || 0));
+        }
+
+        const itemsHtml = displayItems.map(gpu => this.createTickerItem(gpu)).join('');
         const html = itemsHtml + itemsHtml;
-        
         this.container.innerHTML = html;
-        
-        // Set up marquee animation
+
         this.setupMarqueeAnimation();
-        
-        // Add hover listeners
         this.setupHoverListeners();
     }
 
@@ -1623,7 +1673,15 @@ class GPURoiRibbon {
 document.addEventListener('DOMContentLoaded', async () => {
     const ribbon = new GPURoiRibbon();
     await ribbon.init();
-    
+
+    // Sort toggle
+    const sortToggle = document.getElementById('sortToggle');
+    if (sortToggle) {
+        sortToggle.addEventListener('change', () => {
+            if (ribbon._lastGpuData) ribbon.renderMarquee(ribbon._lastGpuData);
+        });
+    }
+
     // Clean up on page unload
     window.addEventListener('beforeunload', () => ribbon.destroy());
 });

@@ -500,6 +500,10 @@
                 </a>
             </div>
             <div class="header-right">
+                <select id="sortToggle" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:2px 6px;font-size:10px;font-family:inherit;cursor:pointer;outline:none;">
+                    <option value="best-gpu">Best GPU</option>
+                    <option value="best-activity">Best Activity</option>
+                </select>
                 <div class="status-indicator">
                     <div class="status-dot live" id="statusDot"></div>
                     <span id="statusText">LIVE</span>
@@ -645,7 +649,8 @@
             */
         const AppState = {
             electricityCost: 0.12,
-            timeRemaining: 60
+            timeRemaining: 60,
+            sortMode: 'best-gpu'
         };
 
         function loadSettings() {
@@ -661,16 +666,35 @@
 
             const ec = AppState.electricityCost;
 
-            // Calculate best daily profit for eaach GPU and sort descending
+            // Calculate profits for each GPU
             const gpusWithProfit = BASELINE_GPU_DATA.map(gpu => ({
                 ...gpu,
                 bestProfit: calculateBestProfit(gpu, ec),
                 bestSource: getBestSource(gpu, ec),
-                miningProfit: calculateMiningProfit(gpu.mining, gpu.tdp, ec)
-            })).sort((a, b) => b.bestProfit - a.bestProfit);
+                miningProfit: calculateMiningProfit(gpu.mining, gpu.tdp, ec),
+                cloudProfit: calculateCloudProfit(gpu.cloudLease, gpu.tdp, ec),
+                aiProfit: calculateAiProfit(gpu.aiLease, gpu.tdp, ec)
+            }));
+
+            let tickerItems;
+            if (AppState.sortMode === 'best-activity') {
+                // Flatten: one entry per GPU×Activity combo, sorted by net profit
+                const flat = [];
+                gpusWithProfit.forEach(gpu => {
+                    if (gpu.miningProfit !== null) flat.push({ ...gpu, displayName: gpu.name + ' ⛏', displayProfit: gpu.miningProfit, displaySource: 'Mining' });
+                    if (gpu.cloudProfit > 0) flat.push({ ...gpu, displayName: gpu.name + ' ☁', displayProfit: gpu.cloudProfit, displaySource: 'Cloud' });
+                    if (gpu.aiProfit > 0) flat.push({ ...gpu, displayName: gpu.name + ' 🤖', displayProfit: gpu.aiProfit, displaySource: 'AI Lease' });
+                });
+                flat.sort((a, b) => b.displayProfit - a.displayProfit);
+                tickerItems = flat;
+            } else {
+                // Best GPU: one entry per GPU, best activity, sorted descending
+                gpusWithProfit.sort((a, b) => b.bestProfit - a.bestProfit);
+                tickerItems = gpusWithProfit.map(gpu => ({ ...gpu, displayName: gpu.name, displayProfit: gpu.bestProfit, displaySource: gpu.bestSource }));
+            }
 
             // Duplicate for continuous loop
-            const items = [...gpusWithProfit, ...gpusWithProfit];
+            const items = [...tickerItems, ...tickerItems];
 
             items.forEach((gpu, i) => {
                 // Separator between items (skip first)
@@ -680,7 +704,7 @@
                     track.appendChild(sep);
                 }
 
-                const profitValue = gpu.bestProfit;
+                const profitValue = gpu.displayProfit;
                 const isPositive = profitValue >= 0;
 
                 // Build tooltip content
@@ -702,7 +726,7 @@
                 item.className = 'ticker-item';
                 item.innerHTML = `
                     <div class="ticker-brand-dot ${gpu.brand}"></div>
-                    <span class="ticker-gpu-name">${gpu.name}</span>
+                    <span class="ticker-gpu-name">${gpu.displayName}</span>
                     <span class="ticker-profit ${isPositive ? 'positive' : 'negative'}">${fmtPlain(profitValue)}</span>
                     <span class="ticker-unit">/day</span>
                     <span class="ticker-arrow ${isPositive ? 'up' : 'down'}">${isPositive ? '▲' : '▼'}</span>
@@ -711,7 +735,7 @@
                         ${miningLine}
                         ${cloudLine}
                         ${aiLine}
-                        <div class="tooltip-row"><span class="tooltip-label">Best via</span><span class="tooltip-value highlight">${gpu.bestSource}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Best via</span><span class="tooltip-value highlight">${gpu.displaySource}</span></div>
                         <div class="tooltip-row"><span class="tooltip-label">MSRP</span><span class="tooltip-value">${fmtPlain(gpu.msrp)}</span></div>
                         <div class="tooltip-row"><span class="tooltip-label">ROI Payback</span><span class="tooltip-value highlight">${roiDays === '∞' ? '∞' : roiDays + ' days'}</span></div>
                         <div class="tooltip-row"><span class="tooltip-label">TDP</span><span class="tooltip-value">${gpu.tdp}W</span></div>
@@ -776,12 +800,21 @@
             startTimer();
         }
 
-        /* 
+        /*
            INIT
             */
         loadSettings();
         renderTicker();
         startTimer();
+
+        // Sort toggle
+        const sortToggle = document.getElementById('sortToggle');
+        if (sortToggle) {
+            sortToggle.addEventListener('change', function() {
+                AppState.sortMode = this.value;
+                renderTicker();
+            });
+        }
     </script>
 </body>
 </html>

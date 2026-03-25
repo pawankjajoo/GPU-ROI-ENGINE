@@ -780,6 +780,12 @@ const GPURoiEngine = (() => {
             const sortFn = {
                 'profit-desc':     (a, b) => b.bestDailyProfit - a.bestDailyProfit,
                 'profit-asc':      (a, b) => a.bestDailyProfit - b.bestDailyProfit,
+                'best-gpu':        (a, b) => b.bestDailyProfit - a.bestDailyProfit,
+                'best-activity':   (a, b) => {
+                    const aMax = Math.max(a.cloudNet||0, a.aiNet||0, a.miningNet||0);
+                    const bMax = Math.max(b.cloudNet||0, b.aiNet||0, b.miningNet||0);
+                    return bMax - aMax;
+                },
                 'roi-asc':         (a, b) => a.roiDays - b.roiDays,
                 'roi-desc':        (a, b) => b.roiDays - a.roiDays,
                 'efficiency-desc': (a, b) => b.efficiency - a.efficiency,
@@ -863,7 +869,68 @@ const GPURoiEngine = (() => {
         }
     };
 
-    /* 
+    /*
+       SORT & RANKING UTILITIES
+       Rank GPUs/CPUs by most profitable activity,
+       or rank all GPU×Activity combos globally.
+     */
+    const Sort = {
+        /**
+         * sortByMostProfitableGPU(results)
+         * Takes an array of Calculator results, picks the best activity
+         * per GPU (highest net daily profit), sorts GPUs descending.
+         * Returns: [{ gpu, bestActivity, netProfit, icon }]
+         */
+        byMostProfitableUnit(results) {
+            if (!results || !results.length) return [];
+            return results.map(r => {
+                const activities = [];
+                if (r.cloudNet !== null && r.cloudNet !== undefined && !isNaN(r.cloudNet)) {
+                    activities.push({ type: 'Cloud Lease', icon: '☁', netProfit: r.cloudNet });
+                }
+                if (r.aiNet !== null && r.aiNet !== undefined && !isNaN(r.aiNet)) {
+                    activities.push({ type: 'AI Inference', icon: '🤖', netProfit: r.aiNet });
+                }
+                if (r.miningNet !== null && r.miningNet !== undefined && !isNaN(r.miningNet)) {
+                    activities.push({ type: 'Mining', icon: '⛏', netProfit: r.miningNet });
+                }
+                if (!activities.length) return null;
+                const best = activities.reduce((a, b) => a.netProfit > b.netProfit ? a : b);
+                return {
+                    gpu: r.gpu || r.name,
+                    bestActivity: best.type,
+                    netProfit: best.netProfit,
+                    icon: best.icon,
+                    category: r.category || 'consumer'
+                };
+            }).filter(Boolean).sort((a, b) => b.netProfit - a.netProfit);
+        },
+
+        /**
+         * sortByMostProfitableActivity(results)
+         * Flattens all GPU×Activity combos into a single ranked list.
+         * Returns: [{ gpu, activity, icon, netProfit }]
+         */
+        byMostProfitableActivity(results) {
+            if (!results || !results.length) return [];
+            const all = [];
+            results.forEach(r => {
+                const name = r.gpu || r.name;
+                if (r.cloudNet !== null && r.cloudNet !== undefined && !isNaN(r.cloudNet)) {
+                    all.push({ gpu: name, activity: 'Cloud Lease', icon: '☁', netProfit: r.cloudNet });
+                }
+                if (r.aiNet !== null && r.aiNet !== undefined && !isNaN(r.aiNet)) {
+                    all.push({ gpu: name, activity: 'AI Inference', icon: '🤖', netProfit: r.aiNet });
+                }
+                if (r.miningNet !== null && r.miningNet !== undefined && !isNaN(r.miningNet)) {
+                    all.push({ gpu: name, activity: 'Mining', icon: '⛏', netProfit: r.miningNet });
+                }
+            });
+            return all.sort((a, b) => b.netProfit - a.netProfit);
+        }
+    };
+
+    /*
        PUBLIC API
      */
     return {
@@ -872,6 +939,7 @@ const GPURoiEngine = (() => {
         API,
         Cache,
         Format,
+        Sort,
         GPU_DATABASE,
         COIN_DEFINITIONS,
         DEFAULT_FEES,
