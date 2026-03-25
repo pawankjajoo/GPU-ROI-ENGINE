@@ -869,6 +869,62 @@
             margin-bottom: 12px;
         }
 
+        /* Spec Tooltip - hover explanations for VRAM, CUDA cores, CPU cores */
+        .spec-item {
+            position: relative;
+            cursor: help;
+        }
+
+        .spec-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1d2a;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #e2e8f0;
+            white-space: normal;
+            width: 220px;
+            z-index: 9999;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .spec-item:hover .spec-tooltip {
+            display: block;
+        }
+
+        /* Keep tooltip visible within iframe bounds */
+        .spec-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--accent);
+        }
+
+        /* Flip tooltip down if near top of viewport */
+        .gpu-card:first-child .spec-tooltip,
+        .gpu-card:nth-child(2) .spec-tooltip {
+            bottom: auto;
+            top: calc(100% + 8px);
+        }
+
+        .gpu-card:first-child .spec-tooltip::after,
+        .gpu-card:nth-child(2) .spec-tooltip::after {
+            top: auto;
+            bottom: 100%;
+            border-top-color: transparent;
+            border-bottom-color: var(--accent);
+        }
+
         /* Tooltip */
         .tooltip {
             display: none;
@@ -977,6 +1033,7 @@
                 <button class="filter-btn" data-filter="datacenter">Datacenter</button>
                 <button class="filter-btn" data-filter="asic">ASIC</button>
                 <button class="filter-btn" data-filter="consumer">Consumer</button>
+                <button class="filter-btn" data-filter="cpu">CPU</button>
                 <button class="filter-btn" data-filter="profitable">Profitable Only</button>
             </div>
 
@@ -1216,7 +1273,45 @@
                 { name: 'Intel Arc B570',     brand: 'intel', category: 'consumer', tdp: 150, msrp: 219,
                   hashrates: { kawpow: 13, kheavyhash: 180, autolykos: 55, etchash: 24 },
                   cloudLease: 0.11, aiLease: null, vram: '10GB GDDR6', cudaCores: 0,
-                  commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' }
+                  commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
+
+                //  CPU PROCESSORS (RandomX / XMR mining)
+                { name: 'AMD EPYC 9654',           brand: 'amd',   category: 'cpu', tdp: 360, msrp: 6000,
+                  hashrates: {}, miningDailyGross: 4.77, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 96,
+                  commentary: 'Server CPU. XMR mining profitable at $0.12/kWh. pushstartsims.com/power' },
+                { name: 'AMD EPYC 9754',           brand: 'amd',   category: 'cpu', tdp: 360, msrp: 8500,
+                  hashrates: {}, miningDailyGross: 3.96, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 128,
+                  commentary: 'Server CPU. XMR mining profitable at $0.12/kWh. pushstartsims.com/power' },
+                { name: 'AMD TR PRO 7995WX',       brand: 'amd',   category: 'cpu', tdp: 350, msrp: 5500,
+                  hashrates: {}, miningDailyGross: 2.81, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 96,
+                  commentary: 'Workstation CPU. XMR mining profitable at $0.12/kWh.' },
+                { name: 'AMD EPYC 9K84',           brand: 'amd',   category: 'cpu', tdp: 400, msrp: 7500,
+                  hashrates: {}, miningDailyGross: 2.90, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 96,
+                  commentary: 'Server CPU. XMR mining profitable at $0.12/kWh. pushstartsims.com/power' },
+                { name: 'AMD Ryzen 9 9950X',       brand: 'amd',   category: 'cpu', tdp: 170, msrp: 599,
+                  hashrates: {}, miningDailyGross: 1.34, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 16,
+                  commentary: 'Consumer CPU. XMR mining profitable at $0.12/kWh.' },
+                { name: 'AMD TR PRO 5995WX',       brand: 'amd',   category: 'cpu', tdp: 280, msrp: 3500,
+                  hashrates: {}, miningDailyGross: 1.53, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 64,
+                  commentary: 'Workstation CPU. Previous gen. XMR mining profitable.' },
+                { name: 'Intel Core Ultra 9 285K', brand: 'intel', category: 'cpu', tdp: 175, msrp: 589,
+                  hashrates: {}, miningDailyGross: 1.06, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 24,
+                  commentary: 'Consumer CPU. XMR mining profitable at $0.12/kWh.' },
+                { name: 'Intel Core Ultra 7 265K', brand: 'intel', category: 'cpu', tdp: 150, msrp: 394,
+                  hashrates: {}, miningDailyGross: 0.94, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 20,
+                  commentary: 'Consumer CPU. XMR mining profitable at $0.12/kWh.' },
+                { name: 'AMD Ryzen 9 9900X3D',     brand: 'amd',   category: 'cpu', tdp: 100, msrp: 499,
+                  hashrates: {}, miningDailyGross: 0.78, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 12,
+                  commentary: 'Consumer CPU. Low TDP. XMR mining profitable.' },
+                { name: 'AMD Ryzen 9 7900X',       brand: 'amd',   category: 'cpu', tdp: 105, msrp: 399,
+                  hashrates: {}, miningDailyGross: 0.78, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 12,
+                  commentary: 'Consumer CPU. Previous gen. XMR mining profitable.' },
+                { name: 'AMD Ryzen 9 7900',        brand: 'amd',   category: 'cpu', tdp: 65,  msrp: 349,
+                  hashrates: {}, miningDailyGross: 0.67, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 12,
+                  commentary: 'Consumer CPU. Low TDP. XMR mining profitable.' },
+                { name: 'AMD Ryzen 9 9950X3D',     brand: 'amd',   category: 'cpu', tdp: 170, msrp: 699,
+                  hashrates: {}, miningDailyGross: 0.90, cloudLease: null, aiLease: null, vram: null, cudaCores: 0, cores: 16,
+                  commentary: 'Consumer CPU. XMR mining profitable at $0.12/kWh.' }
             ];
 
             /* 
@@ -1269,6 +1364,11 @@
                 'RX 7600 XT': 329, 'RX 6900 XT': 549, 'RX 6800 XT': 449, 'RX 6700 XT': 349,
                 'Intel Arc B580': 249, 'Intel Arc A770': 349, 'Intel Arc A750': 289,
                 'Intel Arc A580': 179, 'Intel Arc B570': 219,
+                'AMD EPYC 9654': 6000, 'AMD EPYC 9754': 8500, 'AMD TR PRO 7995WX': 5500,
+                'AMD EPYC 9K84': 7500, 'AMD Ryzen 9 9950X': 599, 'AMD TR PRO 5995WX': 3500,
+                'Intel Core Ultra 9 285K': 589, 'Intel Core Ultra 7 265K': 394,
+                'AMD Ryzen 9 9900X3D': 499, 'AMD Ryzen 9 7900X': 399, 'AMD Ryzen 9 7900': 349,
+                'AMD Ryzen 9 9950X3D': 699,
             };
 
             /* 
@@ -1476,6 +1576,23 @@
                     const electricityCostPerDay = (gpu.tdp / 1000) * 24 * electricityCost;
                     let best = null;
 
+                    // CPU mining override. Uses pre-calculated gross daily revenue
+                    if (gpu.miningDailyGross) {
+                        const grossRevenue = gpu.miningDailyGross;
+                        const poolFee = grossRevenue * (f.poolFeePercent / 100);
+                        const netProfit = grossRevenue - electricityCostPerDay - poolFee - 0.001;
+                        return {
+                            netProfit,
+                            grossRevenue,
+                            electricityCostPerDay,
+                            poolFee,
+                            networkFee: 0.001,
+                            algorithm: 'randomx',
+                            coin: 'XMR',
+                            coinName: 'monero'
+                        };
+                    }
+
                     for (const [algo, hashrate] of Object.entries(gpu.hashrates || {})) {
                         const result = this.miningGrossRevenue(hashrate, algo, liveData);
                         if (!result) continue;
@@ -1614,6 +1731,7 @@
                         tdp: gpu.tdp,
                         vram: gpu.vram,
                         cudaCores: gpu.cudaCores,
+                        cores: gpu.cores || 0,
                         commentary: gpu.commentary,
                         streams,
                         best: bestStream,
@@ -1979,6 +2097,7 @@
                     cudaCores: r.cudaCores,
                     msrp: r.msrp,
                     commentary: r.commentary,
+                    cores: r.cores || 0,
                     bestDaily: { value: r.bestDailyProfit, label: r.best ? r.best.label : 'N/A' },
                     miningDaily: miningStream ? miningStream.dailyProfit : 0,
                     cloudDaily: cloudStream ? cloudStream.dailyProfit : 0,
@@ -2115,9 +2234,17 @@
                     </div>
 
                     <div class="specs-row">
-                        <div class="spec-item">⚡ ${gpu.tdp}W</div>
-                        <div class="spec-item">💾 ${gpu.vram || 'N/A'}</div>
-                        ${gpu.cudaCores ? `<div class="spec-item">🔲 ${gpu.cudaCores}C</div>` : ''}
+                        <div class="spec-item">⚡ ${gpu.tdp}W
+                            <div class="spec-tooltip">Thermal Design Power. Max power draw under load. Directly affects electricity cost and cooling needs.</div>
+                        </div>
+                        <div class="spec-item">💾 ${gpu.vram || (gpu.cores ? gpu.cores + ' cores' : 'N/A')}
+                            <div class="spec-tooltip">${gpu.vram
+                                ? 'Video memory. More VRAM lets you run larger AI models, higher-res rendering, and bigger datasets without running out of memory.'
+                                : 'CPU core count. More cores means faster parallel mining (RandomX) and better multi-threaded workload performance.'}</div>
+                        </div>
+                        ${gpu.cudaCores ? `<div class="spec-item">🔲 ${gpu.cudaCores.toLocaleString()} CUDA
+                            <div class="spec-tooltip">CUDA cores are parallel processors on NVIDIA GPUs. More cores means faster AI training, rendering, and mining. AMD uses Stream Processors instead.</div>
+                        </div>` : ''}
                         <div class="spec-item"><span class="temp-badge ${tempColor}">${gpu.temperature || 'N/A'}°C</span></div>
                     </div>
 
