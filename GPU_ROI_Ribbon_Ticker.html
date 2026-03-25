@@ -633,14 +633,14 @@
            STATE & RENDERING
             */
         const AppState = {
-            electricityCost: 0.10,
+            electricityCost: 0.12,
             timeRemaining: 60
         };
 
         function loadSettings() {
             try {
                 const stored = localStorage.getItem('ribbonElectricityCost');
-                if (stored) AppState.electricityCost = parseFloat(stored) || 0.10;
+                if (stored) AppState.electricityCost = parseFloat(stored) || 0.12;
             } catch (e) { /* localStorage unavailable in some iframe contexts */ }
         }
 
