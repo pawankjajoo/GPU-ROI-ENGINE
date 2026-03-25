@@ -600,17 +600,31 @@
             return miningRevenue - ((tdp / 1000) * 24 * electricityCost);
         }
 
+        function calculateCloudProfit(grossDaily, tdp, electricityCost) {
+            if (!grossDaily) return 0;
+            const platformFee = grossDaily * 0.15; // ~15% Vast.ai/RunPod cut
+            const elec = (tdp / 1000) * 24 * electricityCost;
+            return grossDaily - platformFee - elec;
+        }
+
+        function calculateAiProfit(grossDaily, tdp, electricityCost) {
+            if (!grossDaily) return 0;
+            const platformFee = grossDaily * 0.10; // ~10% AI platform cut
+            const elec = (tdp / 1000) * 24 * electricityCost;
+            return grossDaily - platformFee - elec;
+        }
+
         function calculateBestProfit(gpu, electricityCost) {
             const mining = calculateMiningProfit(gpu.mining, gpu.tdp, electricityCost) || 0;
-            const cloud = gpu.cloudLease || 0;
-            const ai = gpu.aiLease || 0;
+            const cloud = calculateCloudProfit(gpu.cloudLease, gpu.tdp, electricityCost);
+            const ai = calculateAiProfit(gpu.aiLease, gpu.tdp, electricityCost);
             return Math.max(mining, cloud, ai);
         }
 
         function getBestSource(gpu, electricityCost) {
             const mining = calculateMiningProfit(gpu.mining, gpu.tdp, electricityCost) || 0;
-            const cloud = gpu.cloudLease || 0;
-            const ai = gpu.aiLease || 0;
+            const cloud = calculateCloudProfit(gpu.cloudLease, gpu.tdp, electricityCost);
+            const ai = calculateAiProfit(gpu.aiLease, gpu.tdp, electricityCost);
             const max = Math.max(mining, cloud, ai);
             if (max === ai && ai > 0) return 'AI Lease';
             if (max === cloud && cloud > 0) return 'Cloud';
