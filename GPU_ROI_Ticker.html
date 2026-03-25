@@ -1103,7 +1103,9 @@ const GPURoiEngine = (() => {
        DEFAULT FEE MODEL
         */
     const DEFAULT_FEES = {
-        poolFeePercent: 1.5,         // Pool fee as % of gross revenue
+        poolFeePercent: 1.5,         // Pool fee as % of gross mining revenue
+        cloudPlatformFeePercent: 15, // Vast.ai / RunPod platform cut (~15%)
+        aiPlatformFeePercent: 10,    // AI inference platform cut (~10%)
         btcTxFeeUsd: 2.50,          // Avg BTC withdrawal fee per day (pool payout)
         kasTxFeeUsd: 0.001,         // Negligible
         rvnTxFeeUsd: 0.005,         // Negligible
@@ -1396,17 +1398,17 @@ const GPURoiEngine = (() => {
         },
 
         /**
-         * Calculate cloud leasing daily revenue
+         * Calculate cloud leasing daily GROSS revenue (before fees & electricity)
          */
-        cloudLeaseDaily(gpu) {
+        cloudLeaseGrossDaily(gpu) {
             if (!gpu.cloudLease) return null;
             return gpu.cloudLease * 24; // $/hr → $/day
         },
 
         /**
-         * Calculate AI inference leasing daily revenue
+         * Calculate AI inference leasing daily GROSS revenue (before fees & electricity)
          */
-        aiLeaseDaily(gpu) {
+        aiLeaseGrossDaily(gpu) {
             if (!gpu.aiLease) return null;
             return gpu.aiLease * 24; // $/hr → $/day
         },
@@ -1416,9 +1418,10 @@ const GPURoiEngine = (() => {
          * Returns all revenue streams with the best highlighted.
          */
         fullBreakdown(gpu, electricityCost, liveData, btcFees, fees) {
+            const f = { ...DEFAULT_FEES, ...(fees || {}) };
             const mining = this.bestMiningProfit(gpu, electricityCost, liveData, btcFees, fees);
-            const cloud = this.cloudLeaseDaily(gpu);
-            const ai = this.aiLeaseDaily(gpu);
+            const cloud = this.cloudLeaseGrossDaily(gpu);
+            const ai = this.aiLeaseGrossDaily(gpu);
 
             const streams = [];
 
@@ -1438,14 +1441,17 @@ const GPURoiEngine = (() => {
             }
 
             if (cloud !== null) {
+                const cloudElec = (gpu.tdp / 1000) * 24 * electricityCost;
+                const cloudPlatformFee = cloud * (f.cloudPlatformFeePercent / 100);
+                const cloudNet = cloud - cloudPlatformFee - cloudElec;
                 streams.push({
                     type: 'cloud',
                     label: 'Cloud Lease',
                     shortLabel: 'Cloud',
-                    dailyProfit: cloud,
+                    dailyProfit: cloudNet,
                     grossRevenue: cloud,
-                    electricityCost: 0,
-                    poolFee: 0,
+                    electricityCost: cloudElec,
+                    poolFee: cloudPlatformFee,
                     networkFee: 0,
                     algorithm: null,
                     coin: null
@@ -1453,14 +1459,17 @@ const GPURoiEngine = (() => {
             }
 
             if (ai !== null) {
+                const aiElec = (gpu.tdp / 1000) * 24 * electricityCost;
+                const aiPlatformFee = ai * (f.aiPlatformFeePercent / 100);
+                const aiNet = ai - aiPlatformFee - aiElec;
                 streams.push({
                     type: 'ai',
                     label: 'AI Inference',
                     shortLabel: 'AI',
-                    dailyProfit: ai,
+                    dailyProfit: aiNet,
                     grossRevenue: ai,
-                    electricityCost: 0,
-                    poolFee: 0,
+                    electricityCost: aiElec,
+                    poolFee: aiPlatformFee,
                     networkFee: 0,
                     algorithm: null,
                     coin: null
