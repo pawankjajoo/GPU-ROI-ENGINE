@@ -541,6 +541,36 @@ const GPURoiEngine = (() => {
             try {
                 localStorage.setItem('gpuroi_' + key, JSON.stringify({ data, ts: Date.now() }));
             } catch (e) {}
+        },
+
+        /** Store last successfully fetched live data (no TTL — persists until overwritten) */
+        setLastLive(key, data) {
+            try {
+                localStorage.setItem('gpuroi_lastlive_' + key, JSON.stringify({ data, ts: Date.now() }));
+            } catch (e) {}
+        },
+
+        /** Retrieve last successfully fetched live data (never expires) */
+        getLastLive(key) {
+            try {
+                const stored = localStorage.getItem('gpuroi_lastlive_' + key);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    return { data: parsed.data, ts: parsed.ts };
+                }
+            } catch (e) {}
+            return null;
+        },
+
+        /** Get the timestamp of the most recent last-live entry across all keys */
+        getLastLiveTimestamp() {
+            let latest = 0;
+            const keys = ['cryptoPrices', 'whattomine', 'btcFees', 'cloudRates'];
+            for (const key of keys) {
+                const entry = this.getLastLive(key);
+                if (entry && entry.ts > latest) latest = entry.ts;
+            }
+            return latest > 0 ? latest : null;
         }
     };
 
@@ -734,6 +764,8 @@ const GPURoiEngine = (() => {
         serpApiKey: null,
         isLive: false,
         isStale: false,
+        usingLastLive: false,
+        lastLiveTimestamp: null,
         lastRefresh: null,
         _liveData: null,
         _btcFees: null,
@@ -793,6 +825,7 @@ const GPURoiEngine = (() => {
         async fetchLiveData() {
             let liveSourceCount = 0;
             this._dataSources = {};
+            let usedLastLive = false;
 
             // 1. Crypto prices (multi-source)
             const cachedPrices = Cache.get('cryptoPrices');
@@ -804,8 +837,17 @@ const GPURoiEngine = (() => {
                 if (priceResult) {
                     this._cryptoPrices = priceResult.data;
                     Cache.set('cryptoPrices', priceResult);
+                    Cache.setLastLive('cryptoPrices', priceResult);
                     liveSourceCount += priceResult.sourceCount;
                     this._dataSources.prices = priceResult.sources;
+                } else {
+                    // Fall back to last successful live data instead of null
+                    const lastLive = Cache.getLastLive('cryptoPrices');
+                    if (lastLive) {
+                        this._cryptoPrices = lastLive.data.data || lastLive.data;
+                        this._dataSources.prices = ['last-live'];
+                        usedLastLive = true;
+                    }
                 }
             }
 
@@ -819,10 +861,19 @@ const GPURoiEngine = (() => {
                 if (miningResult) {
                     this._liveData = miningResult.data;
                     Cache.set('whattomine', miningResult);
+                    Cache.setLastLive('whattomine', miningResult);
                     liveSourceCount += miningResult.sourceCount;
                     this._dataSources.mining = miningResult.sources;
                 } else {
-                    this._liveData = null;
+                    // Fall back to last successful live data instead of null
+                    const lastLive = Cache.getLastLive('whattomine');
+                    if (lastLive) {
+                        this._liveData = lastLive.data.data || lastLive.data;
+                        this._dataSources.mining = ['last-live'];
+                        usedLastLive = true;
+                    } else {
+                        this._liveData = null;
+                    }
                 }
             }
 
@@ -836,10 +887,19 @@ const GPURoiEngine = (() => {
                 if (feeResult) {
                     this._btcFees = feeResult.data;
                     Cache.set('btcFees', feeResult);
+                    Cache.setLastLive('btcFees', feeResult);
                     liveSourceCount += feeResult.sourceCount;
                     this._dataSources.fees = feeResult.sources;
                 } else {
-                    this._btcFees = null;
+                    // Fall back to last successful live data instead of null
+                    const lastLive = Cache.getLastLive('btcFees');
+                    if (lastLive) {
+                        this._btcFees = lastLive.data.data || lastLive.data;
+                        this._dataSources.fees = ['last-live'];
+                        usedLastLive = true;
+                    } else {
+                        this._btcFees = null;
+                    }
                 }
             }
 
@@ -853,23 +913,51 @@ const GPURoiEngine = (() => {
                 if (cloudResult) {
                     this._cloudRates = cloudResult.data;
                     Cache.set('cloudRates', cloudResult);
+                    Cache.setLastLive('cloudRates', cloudResult);
                     liveSourceCount += cloudResult.sourceCount;
                     this._dataSources.cloud = cloudResult.sources;
                 } else {
-                    this._cloudRates = null;
+                    // Fall back to last successful live data instead of null
+                    const lastLive = Cache.getLastLive('cloudRates');
+                    if (lastLive) {
+                        this._cloudRates = lastLive.data.data || lastLive.data;
+                        this._dataSources.cloud = ['last-live'];
+                        usedLastLive = true;
+                    } else {
+                        this._cloudRates = null;
+                    }
                 }
             }
 
             // Determine live vs stale status
             const hasAnyCached = !!cachedPrices || !!cachedWtm || !!cachedFees || !!cachedCloud;
             this.isLive = liveSourceCount > 0 || hasAnyCached;
-            this.isStale = !this.isLive;
+            this.isStale = !this.isLive && !usedLastLive;
+            this.usingLastLive = usedLastLive && !this.isLive;
             this.lastRefresh = new Date();
+            this.lastLiveTimestamp = Cache.getLastLiveTimestamp();
 
-            // Fire stale warning if ALL sources failed
-            if (this.isStale && this._onStaleWarning) {
-                this._onStaleWarning('All live data sources unreachable. Showing fallback estimates. Data may not reflect current market conditions.');
+            // Fire stale warning — differentiate between last-live and full fallback
+            if (!this.isLive && this._onStaleWarning) {
+                if (usedLastLive && this.lastLiveTimestamp) {
+                    const ago = this._formatTimeAgo(this.lastLiveTimestamp);
+                    this._onStaleWarning(`Live data sources unreachable — showing last successful live data from ${ago}. Values may drift from current market.`);
+                } else {
+                    this._onStaleWarning('All live data sources unreachable. No prior live data available — showing hardcoded baseline estimates.');
+                }
             }
+        },
+
+        /** Format a timestamp as a human-readable "time ago" string */
+        _formatTimeAgo(ts) {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'moments ago';
+            if (mins < 60) return mins + 'm ago';
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return hours + 'h ago';
+            const days = Math.floor(hours / 24);
+            return days + 'd ago';
         },
 
         /** Calculate profitability for ALL GPUs */
@@ -920,7 +1008,7 @@ const GPURoiEngine = (() => {
 
         /** Get current data sources for display */
         getDataSources() {
-            return { ...this._dataSources, isLive: this.isLive, isStale: this.isStale, lastRefresh: this.lastRefresh };
+            return { ...this._dataSources, isLive: this.isLive, isStale: this.isStale, usingLastLive: this.usingLastLive, lastLiveTimestamp: this.lastLiveTimestamp, lastRefresh: this.lastRefresh };
         },
 
         getGPUDatabase() { return GPU_DATABASE; },
@@ -1034,10 +1122,12 @@ const GPURoiEngine = (() => {
                 border-radius:8px; text-align:center; margin:6px 0;
                 font-family:inherit;
             `;
-            banner.innerHTML = '⚠ Live data unavailable — showing fallback estimates. Values may not reflect current market.';
             container.appendChild(banner);
             return {
-                show() { banner.style.display = 'block'; },
+                show(msg) {
+                    banner.innerHTML = '⚠ ' + (msg || 'Live data unavailable — showing last known live data.');
+                    banner.style.display = 'block';
+                },
                 hide() { banner.style.display = 'none'; },
                 element: banner
             };
