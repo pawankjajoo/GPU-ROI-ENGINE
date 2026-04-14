@@ -5,7 +5,7 @@
  *   - Crypto prices:   CoinGecko (primary) + CryptoCompare (secondary)
  *   - Mining revenue:  WhatToMine via CORS proxy (primary) + baseline fallback
  *   - Network fees:    mempool.space (primary) + blockchair (secondary)
- *   - Cloud lease:     Vast.ai public API (primary) + hardcoded fallback
+ *   - Cloud lease:     Vast.ai via dual CORS proxies (codetabs.com + allorigins.win) + hardcoded fallback
  *   - Pool fees:       Configurable (default 1.5%)
  *   - Electricity:     Configurable via slider (default $0.12/kWh)
  *
@@ -16,7 +16,7 @@
  *   - Falls back to hardcoded baselines ONLY when ALL live sources fail
  *   - Displays stale-data warning banner when using fallback
  *
- * CORS-SAFE: All APIs use public CORS endpoints or corsproxy.io
+ * CORS-SAFE: All APIs use public CORS endpoints or dual proxy chain (codetabs.com → allorigins.win)
  * Designed for Wix iframe embeds. No backend needed.
  *
  * Author: Pushstart LLC by Pawan K Jajoo
@@ -44,10 +44,10 @@ const GPURoiEngine = (() => {
           cloudLease: 3.80, aiLease: 3.80, vram: '141GB HBM3e', cudaCores: 16896,
           commentary: 'Datacenter GPU. High cloud and AI lease rates. pushstartsims.com/power' },
         { name: 'NVIDIA H100',       brand: 'nvidia',  category: 'datacenter', tdp: 700,  msrp: 25000, hashrates: {},
-          cloudLease: 2.85, aiLease: 2.85, vram: '80GB HBM3',   cudaCores: 16896,
+          cloudLease: 2.1, aiLease: 2.1, vram: '80GB HBM3',   cudaCores: 16896,
           commentary: 'Datacenter GPU. Standard cloud and AI compute. pushstartsims.com/power' },
         { name: 'NVIDIA A100',       brand: 'nvidia',  category: 'datacenter', tdp: 400,  msrp: 10000, hashrates: {},
-          cloudLease: 1.50, aiLease: 1.50, vram: '80GB HBM2e',  cudaCores: 6912,
+          cloudLease: 1.10, aiLease: 1.10, vram: '80GB HBM2e',  cudaCores: 6912,
           commentary: 'Datacenter GPU. Budget cloud and AI compute. pushstartsims.com/power' },
 
         // ASIC MINERS (SHA-256, Bitcoin)
@@ -64,131 +64,131 @@ const GPURoiEngine = (() => {
         // CONSUMER NVIDIA (GeForce RTX 50-series)
         { name: 'RTX 5090',          brand: 'nvidia', category: 'consumer', tdp: 575, msrp: 1999,
           hashrates: { kawpow: 85, kheavyhash: 1200, autolykos: 550, etchash: 160 },
-          cloudLease: 0.55, aiLease: null, vram: '32GB GDDR7', cudaCores: 21760,
+          cloudLease: 0.42, aiLease: null, vram: '32GB GDDR7', cudaCores: 21760,
           commentary: 'Consumer GPU. Cloud lease profitable. Ergo (Autolykos) mining profitable at $0.12/kWh. Other algos unprofitable.' },
         { name: 'RTX 5080',          brand: 'nvidia', category: 'consumer', tdp: 360, msrp: 999,
           hashrates: { kawpow: 61, kheavyhash: 800, autolykos: 370, etchash: 125 },
-          cloudLease: 0.40, aiLease: null, vram: '16GB GDDR7', cudaCores: 10752,
+          cloudLease: 0.180, aiLease: null, vram: '16GB GDDR7', cudaCores: 10752,
           commentary: 'Consumer GPU. Cloud lease profitable. Ergo (Autolykos) mining profitable at $0.12/kWh. Other algos unprofitable.' },
         { name: 'RTX 5070 Ti',       brand: 'nvidia', category: 'consumer', tdp: 300, msrp: 749,
           hashrates: { kawpow: 43, kheavyhash: 650, autolykos: 195, etchash: 88 },
-          cloudLease: 0.35, aiLease: null, vram: '16GB GDDR7', cudaCores: 8960,
+          cloudLease: 0.15, aiLease: null, vram: '16GB GDDR7', cudaCores: 8960,
           commentary: 'Consumer GPU. Cloud lease profitable. Ergo mining marginal at $0.12/kWh.' },
         { name: 'RTX 5070',          brand: 'nvidia', category: 'consumer', tdp: 250, msrp: 549,
           hashrates: { kawpow: 41, kheavyhash: 550, autolykos: 200, etchash: 80 },
-          cloudLease: 0.30, aiLease: null, vram: '12GB GDDR7', cudaCores: 6144,
+          cloudLease: 0.140, aiLease: null, vram: '12GB GDDR7', cudaCores: 6144,
           commentary: 'Consumer GPU. Cloud lease profitable. Ergo mining marginal at $0.12/kWh.' },
 
         // CONSUMER NVIDIA (GeForce RTX 40-series)
         { name: 'RTX 4090',          brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1599,
           hashrates: { kawpow: 60, kheavyhash: 800, autolykos: 260, etchash: 132 },
-          cloudLease: 0.45, aiLease: null, vram: '24GB GDDR6X', cudaCores: 16384,
+          cloudLease: 0.32, aiLease: null, vram: '24GB GDDR6X', cudaCores: 16384,
           commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4080 Super',    brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 999,
           hashrates: { kawpow: 38, kheavyhash: 550, autolykos: 180, etchash: 88 },
-          cloudLease: 0.25, aiLease: null, vram: '16GB GDDR6X', cudaCores: 10240,
+          cloudLease: 0.16, aiLease: null, vram: '16GB GDDR6X', cudaCores: 10240,
           commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4070 Ti Super', brand: 'nvidia', category: 'consumer', tdp: 285, msrp: 799,
           hashrates: { kawpow: 30, kheavyhash: 450, autolykos: 155, etchash: 72 },
-          cloudLease: 0.22, aiLease: null, vram: '16GB GDDR6X', cudaCores: 8448,
+          cloudLease: 0.14, aiLease: null, vram: '16GB GDDR6X', cudaCores: 8448,
           commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4070 Super',    brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 599,
           hashrates: { kawpow: 25, kheavyhash: 380, autolykos: 130, etchash: 58 },
-          cloudLease: 0.18, aiLease: null, vram: '12GB GDDR6X', cudaCores: 7168,
+          cloudLease: 0.1, aiLease: null, vram: '12GB GDDR6X', cudaCores: 7168,
           commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4070',          brand: 'nvidia', category: 'consumer', tdp: 200, msrp: 549,
           hashrates: { kawpow: 22, kheavyhash: 340, autolykos: 115, etchash: 52 },
-          cloudLease: 0.15, aiLease: null, vram: '12GB GDDR6X', cudaCores: 5888,
+          cloudLease: 0.09, aiLease: null, vram: '12GB GDDR6X', cudaCores: 5888,
           commentary: 'Consumer GPU. Cloud lease profitable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4060 Ti',       brand: 'nvidia', category: 'consumer', tdp: 160, msrp: 399,
           hashrates: { kawpow: 18, kheavyhash: 260, autolykos: 90, etchash: 40 },
-          cloudLease: 0.12, aiLease: null, vram: '8GB GDDR6', cudaCores: 4352,
+          cloudLease: 0.11, aiLease: null, vram: '8GB GDDR6', cudaCores: 4352,
           commentary: 'Consumer GPU. Cloud lease viable. Mining unprofitable at $0.12/kWh.' },
         { name: 'RTX 4060',          brand: 'nvidia', category: 'consumer', tdp: 115, msrp: 299,
           hashrates: { kawpow: 14, kheavyhash: 200, autolykos: 68, etchash: 30 },
-          cloudLease: 0.10, aiLease: null, vram: '8GB GDDR6', cudaCores: 3072,
+          cloudLease: 0.070, aiLease: null, vram: '8GB GDDR6', cudaCores: 3072,
           commentary: 'Consumer GPU. Low TDP. Cloud lease viable. Mining unprofitable.' },
 
         // CONSUMER NVIDIA (GeForce RTX 30-series)
         { name: 'RTX 3090 Ti',       brand: 'nvidia', category: 'consumer', tdp: 450, msrp: 1099,
           hashrates: { kawpow: 52, kheavyhash: 680, autolykos: 230, etchash: 120 },
-          cloudLease: 0.30, aiLease: null, vram: '24GB GDDR6X', cudaCores: 10752,
+          cloudLease: 0.160, aiLease: null, vram: '24GB GDDR6X', cudaCores: 10752,
           commentary: 'Consumer GPU. Previous gen. Cloud lease profitable. Mining unprofitable.' },
         { name: 'RTX 3090',          brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 999,
           hashrates: { kawpow: 48, kheavyhash: 620, autolykos: 210, etchash: 110 },
-          cloudLease: 0.25, aiLease: null, vram: '24GB GDDR6X', cudaCores: 10496,
+          cloudLease: 0.14, aiLease: null, vram: '24GB GDDR6X', cudaCores: 10496,
           commentary: 'Consumer GPU. Previous gen. Cloud lease profitable. Mining unprofitable.' },
         { name: 'RTX 3080 Ti',       brand: 'nvidia', category: 'consumer', tdp: 350, msrp: 700,
           hashrates: { kawpow: 42, kheavyhash: 540, autolykos: 185, etchash: 95 },
-          cloudLease: 0.20, aiLease: null, vram: '12GB GDDR6X', cudaCores: 10240,
+          cloudLease: 0.120, aiLease: null, vram: '12GB GDDR6X', cudaCores: 10240,
           commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
         { name: 'RTX 3080',          brand: 'nvidia', category: 'consumer', tdp: 320, msrp: 599,
           hashrates: { kawpow: 38, kheavyhash: 480, autolykos: 165, etchash: 85 },
-          cloudLease: 0.18, aiLease: null, vram: '10GB GDDR6X', cudaCores: 8704,
+          cloudLease: 0.11, aiLease: null, vram: '10GB GDDR6X', cudaCores: 8704,
           commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
         { name: 'RTX 3070 Ti',       brand: 'nvidia', category: 'consumer', tdp: 290, msrp: 499,
           hashrates: { kawpow: 30, kheavyhash: 380, autolykos: 140, etchash: 68 },
-          cloudLease: 0.14, aiLease: null, vram: '8GB GDDR6X', cudaCores: 6144,
+          cloudLease: 0.1, aiLease: null, vram: '8GB GDDR6X', cudaCores: 6144,
           commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
         { name: 'RTX 3070',          brand: 'nvidia', category: 'consumer', tdp: 220, msrp: 399,
           hashrates: { kawpow: 25, kheavyhash: 310, autolykos: 120, etchash: 56 },
-          cloudLease: 0.12, aiLease: null, vram: '8GB GDDR6', cudaCores: 5888,
+          cloudLease: 0.08, aiLease: null, vram: '8GB GDDR6', cudaCores: 5888,
           commentary: 'Consumer GPU. Previous gen. Cloud lease viable. Mining unprofitable.' },
 
         // CONSUMER AMD (Radeon RX 7000 & 6000 series)
         { name: 'RX 7900 XTX',       brand: 'amd', category: 'consumer', tdp: 355, msrp: 999,
           hashrates: { kawpow: 48, kheavyhash: 600, autolykos: 220, etchash: 95 },
-          cloudLease: 0.50, aiLease: null, vram: '24GB GDDR6', cudaCores: 0,
+          cloudLease: 0.280, aiLease: null, vram: '24GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
         { name: 'RX 7900 XT',        brand: 'amd', category: 'consumer', tdp: 315, msrp: 749,
           hashrates: { kawpow: 35, kheavyhash: 450, autolykos: 175, etchash: 75 },
-          cloudLease: 0.35, aiLease: null, vram: '20GB GDDR6', cudaCores: 0,
+          cloudLease: 0.2, aiLease: null, vram: '20GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 3. Cloud lease profitable. Mining unprofitable.' },
         { name: 'RX 7800 XT',        brand: 'amd', category: 'consumer', tdp: 263, msrp: 499,
           hashrates: { kawpow: 26, kheavyhash: 350, autolykos: 135, etchash: 58 },
-          cloudLease: 0.25, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
+          cloudLease: 0.14, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
         { name: 'RX 7700 XT',        brand: 'amd', category: 'consumer', tdp: 245, msrp: 449,
           hashrates: { kawpow: 22, kheavyhash: 300, autolykos: 110, etchash: 48 },
-          cloudLease: 0.20, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
+          cloudLease: 0.110, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 3. Cloud lease viable. Mining unprofitable.' },
         { name: 'RX 7600 XT',        brand: 'amd', category: 'consumer', tdp: 150, msrp: 329,
           hashrates: { kawpow: 14, kheavyhash: 180, autolykos: 68, etchash: 30 },
-          cloudLease: 0.15, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
+          cloudLease: 0.08, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 3. Low TDP. Cloud lease viable.' },
         { name: 'RX 6900 XT',        brand: 'amd', category: 'consumer', tdp: 300, msrp: 549,
           hashrates: { kawpow: 30, kheavyhash: 380, autolykos: 150, etchash: 62 },
-          cloudLease: 0.28, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
+          cloudLease: 0.15, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
         { name: 'RX 6800 XT',        brand: 'amd', category: 'consumer', tdp: 300, msrp: 449,
           hashrates: { kawpow: 25, kheavyhash: 320, autolykos: 130, etchash: 55 },
-          cloudLease: 0.22, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
+          cloudLease: 0.12, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
         { name: 'RX 6700 XT',        brand: 'amd', category: 'consumer', tdp: 230, msrp: 349,
           hashrates: { kawpow: 18, kheavyhash: 220, autolykos: 85, etchash: 38 },
-          cloudLease: 0.15, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
+          cloudLease: 0.08, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. RDNA 2. Cloud lease viable. Mining unprofitable.' },
 
         // CONSUMER INTEL ARC
         { name: 'Intel Arc B580',     brand: 'intel', category: 'consumer', tdp: 150, msrp: 249,
           hashrates: { kawpow: 15, kheavyhash: 200, autolykos: 60, etchash: 26 },
-          cloudLease: 0.12, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
+          cloudLease: 0.07, aiLease: null, vram: '12GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
         { name: 'Intel Arc A770',     brand: 'intel', category: 'consumer', tdp: 225, msrp: 349,
           hashrates: { kawpow: 20, kheavyhash: 260, autolykos: 85, etchash: 35 },
-          cloudLease: 0.18, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
+          cloudLease: 0.1, aiLease: null, vram: '16GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
         { name: 'Intel Arc A750',     brand: 'intel', category: 'consumer', tdp: 225, msrp: 289,
           hashrates: { kawpow: 16, kheavyhash: 210, autolykos: 68, etchash: 28 },
-          cloudLease: 0.14, aiLease: null, vram: '8GB GDDR6', cudaCores: 0,
+          cloudLease: 0.08, aiLease: null, vram: '8GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
         { name: 'Intel Arc A580',     brand: 'intel', category: 'consumer', tdp: 185, msrp: 179,
           hashrates: { kawpow: 12, kheavyhash: 160, autolykos: 50, etchash: 22 },
-          cloudLease: 0.10, aiLease: null, vram: '8GB GDDR6', cudaCores: 0,
+          cloudLease: 0.060, aiLease: null, vram: '8GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. Arc. Low TDP. Cloud lease viable.' },
         { name: 'Intel Arc B570',     brand: 'intel', category: 'consumer', tdp: 150, msrp: 219,
           hashrates: { kawpow: 13, kheavyhash: 180, autolykos: 55, etchash: 24 },
-          cloudLease: 0.11, aiLease: null, vram: '10GB GDDR6', cudaCores: 0,
+          cloudLease: 0.06, aiLease: null, vram: '10GB GDDR6', cudaCores: 0,
           commentary: 'Consumer GPU. Arc. Cloud lease viable. Mining unprofitable.' },
 
         // CPU PROCESSORS (RandomX / XMR mining)
@@ -303,7 +303,10 @@ const GPURoiEngine = (() => {
      ═══════════════════════════════════════════ */
     const API = {
         TIMEOUT: 8000,
-        PROXY: 'https://corsproxy.io/?',
+        PROXIES: [
+            { name: 'codetabs',    url: 'https://api.codetabs.com/v1/proxy?quest=' },
+            { name: 'allorigins',  url: 'https://api.allorigins.win/raw?url=' }
+        ],
 
         /** Race fetch against timeout. Returns null on failure (never throws). */
         async _fetch(url, ms) {
@@ -320,9 +323,13 @@ const GPURoiEngine = (() => {
             }
         },
 
-        /** Fetch via CORS proxy. Returns null on failure. */
+        /** Fetch via CORS proxy. Tries each proxy in order until one succeeds. */
         async _proxyFetch(url, ms) {
-            return this._fetch(this.PROXY + encodeURIComponent(url), ms || 10000);
+            for (const proxy of this.PROXIES) {
+                const result = await this._fetch(proxy.url + encodeURIComponent(url), ms || 12000);
+                if (result) return result;
+            }
+            return null;
         },
 
         /**
@@ -423,16 +430,11 @@ const GPURoiEngine = (() => {
 
         /**
          * MULTI-SOURCE: Cloud GPU Lease Rates
-         * Source 1: Vast.ai public search API (CORS via proxy)
-         * Falls back to hardcoded rates if API unavailable
-         * Returns: { gpuName: avgPricePerHour, ... }
+         * Source 1: Vast.ai public search API (via dual CORS proxies)
+         * Returns: { gpuName: { median, count, min, max }, ... }
+         * Range data powers hover tooltips on GPU tiles.
          */
         async fetchCloudLeaseRates() {
-            const gpuQueries = [
-                'RTX 5090', 'RTX 5080', 'RTX 5070', 'RTX 4090', 'RTX 4080',
-                'RTX 3090', 'RTX 3080', 'RTX 3070'
-            ];
-
             // Vast.ai public offers endpoint
             const vastUrl = 'https://console.vast.ai/api/v0/bundles?q=' +
                 encodeURIComponent(JSON.stringify({
@@ -445,23 +447,23 @@ const GPURoiEngine = (() => {
                     limit: 200
                 }));
 
-            const vastData = await this._proxyFetch(vastUrl, 12000);
+            const vastData = await this._proxyFetch(vastUrl, 15000);
 
             if (!vastData || !vastData.offers) return null;
 
-            // Aggregate by GPU name, calculate median price
+            // Aggregate by GPU name, calculate median + range
             const rates = {};
             for (const offer of vastData.offers) {
                 const name = (offer.gpu_name || '').trim();
                 if (!name) continue;
-                const priceHr = offer.dph_total; // dollars per hour
+                const priceHr = offer.dph_total;
                 if (!priceHr || priceHr <= 0 || priceHr > 50) continue;
 
                 if (!rates[name]) rates[name] = [];
                 rates[name].push(priceHr);
             }
 
-            // Calculate median for each GPU
+            // Calculate median + range for each GPU
             const result = {};
             for (const [name, prices] of Object.entries(rates)) {
                 prices.sort((a, b) => a - b);
@@ -679,18 +681,32 @@ const GPURoiEngine = (() => {
         cloudLeaseGrossDaily(gpu, liveCloudRates) {
             // Try live rate first
             if (liveCloudRates) {
-                const nameVariants = [gpu.name, gpu.name.replace('RTX ', 'RTX')];
+                const nameVariants = [gpu.name, gpu.name.replace('RTX ', 'RTX'), gpu.name.replace(' Super', 'S').replace(' Ti', ' Ti')];
                 for (const variant of nameVariants) {
                     for (const [key, rateData] of Object.entries(liveCloudRates)) {
                         if (key.includes(variant) || variant.includes(key)) {
-                            return rateData.median * 24;
+                            return {
+                                daily: rateData.median * 24,
+                                ratePerHr: rateData.median,
+                                min: rateData.min,
+                                max: rateData.max,
+                                count: rateData.count,
+                                source: 'live'
+                            };
                         }
                     }
                 }
             }
             // Fallback to hardcoded
             if (!gpu.cloudLease) return null;
-            return gpu.cloudLease * 24;
+            return {
+                daily: gpu.cloudLease * 24,
+                ratePerHr: gpu.cloudLease,
+                min: gpu.cloudLease * 0.7,
+                max: gpu.cloudLease * 1.4,
+                count: 0,
+                source: 'fallback'
+            };
         },
 
         aiLeaseGrossDaily(gpu) {
@@ -716,13 +732,20 @@ const GPURoiEngine = (() => {
             }
 
             if (cloud !== null) {
+                const cloudGross = typeof cloud === 'object' ? cloud.daily : cloud;
                 const cloudElec = (gpu.tdp / 1000) * 24 * electricityCost;
-                const cloudPlatformFee = cloud * (f.cloudPlatformFeePercent / 100);
-                const cloudNet = cloud - cloudPlatformFee - cloudElec;
+                const cloudPlatformFee = cloudGross * (f.cloudPlatformFeePercent / 100);
+                const cloudNet = cloudGross - cloudPlatformFee - cloudElec;
+                const rateInfo = typeof cloud === 'object' ? cloud : null;
                 streams.push({
                     type: 'cloud', label: 'Cloud Lease', shortLabel: 'Cloud',
-                    dailyProfit: cloudNet, grossRevenue: cloud, electricityCost: cloudElec,
-                    poolFee: cloudPlatformFee, networkFee: 0, algorithm: null, coin: null
+                    dailyProfit: cloudNet, grossRevenue: cloudGross, electricityCost: cloudElec,
+                    poolFee: cloudPlatformFee, networkFee: 0, algorithm: null, coin: null,
+                    ratePerHr: rateInfo ? rateInfo.ratePerHr : null,
+                    rateMin: rateInfo ? rateInfo.min : null,
+                    rateMax: rateInfo ? rateInfo.max : null,
+                    rateCount: rateInfo ? rateInfo.count : 0,
+                    rateSource: rateInfo ? rateInfo.source : 'fallback'
                 });
             }
 
@@ -934,16 +957,21 @@ const GPURoiEngine = (() => {
             this.isLive = liveSourceCount > 0 || hasAnyCached;
             this.isStale = !this.isLive && !usedLastLive;
             this.usingLastLive = usedLastLive && !this.isLive;
+            this.cloudRatesLive = !!(this._cloudRates && this._dataSources.cloud && this._dataSources.cloud[0] !== 'last-live');
             this.lastRefresh = new Date();
             this.lastLiveTimestamp = Cache.getLastLiveTimestamp();
 
-            // Fire stale warning — differentiate between last-live and full fallback
-            if (!this.isLive && this._onStaleWarning) {
-                if (usedLastLive && this.lastLiveTimestamp) {
-                    const ago = this._formatTimeAgo(this.lastLiveTimestamp);
-                    this._onStaleWarning(`Live data sources unreachable — showing last successful live data from ${ago}. Values may drift from current market.`);
-                } else {
-                    this._onStaleWarning('All live data sources unreachable. No prior live data available — showing hardcoded baseline estimates.');
+            // Fire stale warning — check both overall and cloud-specific staleness
+            if (this._onStaleWarning) {
+                if (!this.isLive) {
+                    if (usedLastLive && this.lastLiveTimestamp) {
+                        const ago = this._formatTimeAgo(this.lastLiveTimestamp);
+                        this._onStaleWarning('Live data sources unreachable — showing last successful live data from ' + ago + '. Values may drift from current market.');
+                    } else {
+                        this._onStaleWarning('All live data sources unreachable. Showing hardcoded baseline estimates (updated Apr 2026).');
+                    }
+                } else if (!this.cloudRatesLive && !this._cloudRates) {
+                    this._onStaleWarning('Cloud lease rates unavailable — using baseline estimates (updated Apr 2026). Crypto & mining data are live.');
                 }
             }
         },
@@ -1171,12 +1199,16 @@ const GPURoiEngine = (() => {
             if (!results || !results.length) return [];
             return results.map(r => {
                 const activities = [];
-                if (r.cloudNet !== null && r.cloudNet !== undefined && !isNaN(r.cloudNet))
-                    activities.push({ type: 'Cloud Lease', icon: '☁', netProfit: r.cloudNet });
-                if (r.aiNet !== null && r.aiNet !== undefined && !isNaN(r.aiNet))
-                    activities.push({ type: 'AI Inference', icon: '🤖', netProfit: r.aiNet });
-                if (r.miningNet !== null && r.miningNet !== undefined && !isNaN(r.miningNet))
-                    activities.push({ type: 'Mining', icon: '⛏', netProfit: r.miningNet });
+                if (r.streams && Array.isArray(r.streams)) {
+                    r.streams.forEach(stream => {
+                        const profit = stream.dailyProfit;
+                        if (profit !== null && profit !== undefined && !isNaN(profit)) {
+                            const typeMap = { cloud: 'Cloud Lease', ai: 'AI Inference', mining: 'Mining' };
+                            const iconMap = { cloud: '☁', ai: '🤖', mining: '⛏' };
+                            activities.push({ type: typeMap[stream.type] || stream.type, icon: iconMap[stream.type] || '?', netProfit: profit });
+                        }
+                    });
+                }
                 if (!activities.length) return null;
                 const best = activities.reduce((a, b) => a.netProfit > b.netProfit ? a : b);
                 return { gpu: r.gpu || r.name, bestActivity: best.type, netProfit: best.netProfit, icon: best.icon, category: r.category || 'consumer' };
@@ -1187,12 +1219,16 @@ const GPURoiEngine = (() => {
             const all = [];
             results.forEach(r => {
                 const name = r.gpu || r.name;
-                if (r.cloudNet !== null && !isNaN(r.cloudNet))
-                    all.push({ gpu: name, activity: 'Cloud Lease', icon: '☁', netProfit: r.cloudNet });
-                if (r.aiNet !== null && !isNaN(r.aiNet))
-                    all.push({ gpu: name, activity: 'AI Inference', icon: '🤖', netProfit: r.aiNet });
-                if (r.miningNet !== null && !isNaN(r.miningNet))
-                    all.push({ gpu: name, activity: 'Mining', icon: '⛏', netProfit: r.miningNet });
+                if (r.streams && Array.isArray(r.streams)) {
+                    r.streams.forEach(stream => {
+                        const profit = stream.dailyProfit;
+                        if (profit !== null && !isNaN(profit)) {
+                            const typeMap = { cloud: 'Cloud Lease', ai: 'AI Inference', mining: 'Mining' };
+                            const iconMap = { cloud: '☁', ai: '🤖', mining: '⛏' };
+                            all.push({ gpu: name, activity: typeMap[stream.type] || stream.type, icon: iconMap[stream.type] || '?', netProfit: profit });
+                        }
+                    });
+                }
             });
             return all.sort((a, b) => b.netProfit - a.netProfit);
         }
